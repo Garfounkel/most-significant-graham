@@ -1,0 +1,3 @@
+a clean
+functional style
+ API.

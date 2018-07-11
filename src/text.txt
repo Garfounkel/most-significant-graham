@@ -1,0 +1,3 @@
+Spark is a framework for writing fast, distributed programs. Spark solves similar
+problems as Hadoop MapReduce does but with a fast in-memory approach and a clean
+functional style API.
