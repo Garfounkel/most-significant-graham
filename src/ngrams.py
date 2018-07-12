@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 def ngrams(input_list, n=1):
     return zip(*(input_list[i:] for i in range(n)))
 
@@ -27,12 +30,12 @@ def ngrams_read_file(ngrams, doc, ngram_range):
     ngram_count = defaultdict(int)
     while True:
         try:
-            for i in range(ngram_range):
+            for i in range(*ngram_range):
                 if len(buffer) < i:
                     buffer.append(next(words))
-                ngram = buffer[:i]
+                ngram = tuple(buffer[:i])
                 ngram_count[i] += 1
-                ngram[ngram][doc] += 1
+                ngrams[ngram][doc] += 1
             buffer.pop(0)
         except StopIteration:
             break

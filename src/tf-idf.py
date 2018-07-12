@@ -43,7 +43,7 @@ def tf_idf(corpus):
 
         # Computing tf-idf:
         for doc, count in docs.items():
-            tf = count / words_per_doc[doc]
+            tf = count / words_per_doc[doc][len(ngram)]
             tfidf = tf * idf
             result[(ngram, doc)] = tfidf
     return result
