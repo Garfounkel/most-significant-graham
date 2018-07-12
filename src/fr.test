@@ -1,0 +1,7 @@
+La justification théorique a posteriori de ce schéma de pondération repose sur l'observation empirique de la
+fréquence des mots dans un texte qui est donnée par la loi de Zipf. Si une requête contient le terme T, un
+document a d'autant plus de chances d'y répondre qu'il contient ce terme : la fréquence du terme au sein du
+document (TF) est grande. Néanmoins, si le terme T est lui-même très fréquent au sein du corpus, c'est-à-dire qu'il est
+présent dans de nombreux documents (e.g. les articles définis - le, la, les), il est en fait peu discriminant.
+C'est pourquoi le schéma propose d'augmenter la pertinence d'un terme en fonction de sa rareté au sein du corpus : la
+fréquence du terme dans le corpus (IDF) est élevée. Ainsi, la présence d'un terme rare de la requête dans le contenu d'un document fait croître le « score » de ce dernier.

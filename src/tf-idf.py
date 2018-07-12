@@ -3,14 +3,6 @@ from ngrams import ngrams_read_file
 import math
 
 
-def flatten(*iterables):
-    """flatten((A, B, C), (D, E, F)) --> A B C D E F """
-    for it in iterables:
-        for elements in it:
-            for element in elements:
-                yield element
-
-
 def corpus_stats(corpus, ngram_range=(1, 4)):
     """corpus_stats(corpus) --> map(ngram: map(doc_n: count)), map(doc_n: count)
 
@@ -27,7 +19,7 @@ def corpus_stats(corpus, ngram_range=(1, 4)):
     return ngrams, words_per_doc
 
 
-def tf_idf(corpus, training=False):
+def tf_idf(corpus):
     """tf_idf(corpus) --> map(ngram: map(doc_n: tf-idf))
 
     Arguments:
@@ -44,18 +36,13 @@ def tf_idf(corpus, training=False):
         # Computing tf-idf:
         for doc, count in docs.items():
             tf = count / words_per_doc[doc][len(ngram)]
-            tfidf = tf if (training and idf == 0) else tf * idf
-            result[(ngram, doc)] = tfidf
+            if (len(corpus) == 1):
+                tfidf = tf
+                result[ngram] = tfidf
+            else:
+                tfidf = tf * idf
+                result[(ngram, doc)] = tfidf
     return result
-
-
-def print_dict_of_dicts(dict_of_dicts):
-    """Pretty-print dict of dicts"""
-    for key1, value1 in dict_of_dicts.items():
-        print(f'{key1}: {{', end='')
-        for key2, value2 in value1.items():
-            print(f'{key2}: {value2}, ', end='')
-        print("}")
 
 
 def top_n(tfidf, n):
@@ -64,18 +51,16 @@ def top_n(tfidf, n):
 
 
 if __name__ == '__main__':
-    # print_dict_of_dicts(corpus_stats(["text.txt", "text0.txt"])[0])
-    # print()
-
     import sys
     import pickle
     import os
 
 
-    if (len(sys.argv) < 4):
+    if (len(sys.argv) < 3 or (len(sys.argv) != 3 and sys.argv[1] == '--checklang')):
         print("usage:")
         print("\t--train outputfile [corpus files, separated by spaces]")
         print("\t--lang inputfolder [corpus files, separated by spaces]")
+        print("\t--checklang input-lang.file")
         print("Output file stores one training set's top ngrams while input folder stores all corpuses training results for language classification.")
         exit(2)
 
@@ -84,7 +69,7 @@ if __name__ == '__main__':
     if (sys.argv[1] == '--train'):
         outputfile = sys.argv[2]
         print("Computing most signicant ngrams for", corpus)
-        tfidf = tf_idf(corpus, training=True)
+        tfidf = tf_idf(corpus)
         top_200 = top_n(tfidf, 200)
         print("Dumping training output...")
         with open(outputfile, 'wb') as file:
@@ -93,14 +78,35 @@ if __name__ == '__main__':
 
     if (sys.argv[1] == '--lang'):
         inputfolder = sys.argv[2]
+        lang_scores = defaultdict(int)
         for dirpath, dirnames, filenames in os.walk(inputfolder):
-            ngrams_data = {}
-            for filename in filenames:
-                path = dirpath + "/" + filename
-                with open(path, 'rb') as file:
-                    ngrams = pickle.load(file)
-                    ngrams_data[path] = ngrams
-                    print(f"--- Top 200 ngrams:", path)
-                    for (ngram, doc), tfidf in ngrams:
-                        print(f'{ngram}, {doc}:', tfidf)
+            for inputfile in corpus:
+                ngrams_input = tf_idf([inputfile])
+                for filename in filenames:
+                    path = dirpath + "/" + filename
+                    with open(path, 'rb') as file:
+                        ngrams = pickle.load(file)
+                        for ngram, tfidf in ngrams:
+                            if ngram in ngrams_input:
+                                lang_scores[path] += tfidf * ngrams_input[ngram]
+                # Language detection:
+                best = (None, 0)
+                for lang, score in lang_scores.items():
+                    print(f'{lang}: {score}')
+                    if score > best[1]:
+                        best = (lang, score)
+                lang = best[0]
+                print(f'Detected {inputfile} to be from this language: {lang}')
             break  # Only toplevel dir
+
+    if (sys.argv[1] == '--checklang'):
+        path = sys.argv[2]
+        with open(path, 'rb') as file:
+            ngrams = pickle.load(file)
+            print(f"--- Top 200 ngrams:", path)
+            try:
+                for (ngram, doc), tfidf in ngrams:
+                    print(f'{ngram}, {doc}:', tfidf)
+            except ValueError:
+                for ngram, tfidf in ngrams:
+                    print(f'{ngram}:', tfidf)
