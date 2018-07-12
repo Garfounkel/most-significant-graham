@@ -15,16 +15,19 @@ Output file stores one training set's top ngrams while input folder stores all c
 ```
 To check which ngrams are the most significant in our danish pre-trained example.
 
+---
 ```
 > python lang_detect.py --train ../train/lang/fr2.out ../data/fr
 ```
 To create `../train/lang/fr2.out` containing the most significant ngrams from the file `../data/fr`.
 
+---
 ```
 > python lang_detect.py --train ../train/corpus/c1.out ../data/doc1 ../data/doc2
 ```
 To create `../train/corpus/c1.out` containing the most significant ngrams by TF-IDF from the files `../data/doc1` and `../data/doc2`.
 
+---
 ```
 > python lang_detect.py --lang ../train/lang ../test/fr.test ../test/da.test ../test/en.test
 
