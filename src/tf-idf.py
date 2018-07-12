@@ -1,5 +1,5 @@
 from collections import defaultdict
-from ngrams import ngrams_streams
+from ngrams import ngrams_read_file
 import math
 
 
@@ -17,21 +17,14 @@ def corpus_stats(corpus, ngram_range=(1, 4)):
     Arguments:
     corpus -- The list of path to each documents text file
     """
-    ngram_count = defaultdict(lambda : defaultdict(int))
-    words_per_doc = dict()
+    ngrams = defaultdict(lambda : defaultdict(int))
+    words_per_doc = defaultdict(dict)
     for doc in corpus:
-        with open(doc) as text:
-            input_text = text.read()
-            input_list = input_text.lower().split()
-
-            # Wordcount per document:
-            words_per_doc[doc] = len(input_list)
-
-            # ngram count per documents:
-            ngrams_1_to_3 = ngrams_streams(input_list, ngram_range)
-            for ngram in flatten(ngrams_1_to_3):
-                ngram_count[ngram][doc] += 1
-    return ngram_count, words_per_doc
+        # ngram count per documents (stored in ngrams):
+        ngram_number = ngrams_read_file(ngrams, doc, ngram_range)
+        # Wordcount per document:
+        words_per_doc[doc] = ngram_number
+    return ngrams, words_per_doc
 
 
 def tf_idf(corpus):
@@ -66,6 +59,7 @@ def print_dict_of_dicts(dict_of_dicts):
 
 
 def top_n(tfidf, n):
+    """Return a list containing the top n ngrams by tfidf"""
     return [(k, tfidf[k]) for k in sorted(tfidf, key=tfidf.get, reverse=True)][:n]
 
 
@@ -73,8 +67,37 @@ if __name__ == '__main__':
     # print_dict_of_dicts(corpus_stats(["text.txt", "text0.txt"])[0])
     # print()
 
-    n = 10
-    print(f"--- Top {n} ngrams:")
-    tfidf = tf_idf(["text.txt", "text0.txt"])
-    for (ngram, doc), tfidf in top_n(tfidf, n):
-        print(f'{ngram}, {doc}:', tfidf)
+    import sys
+    import pickle
+    import os
+
+
+    if (len(sys.argv) < 4):
+        print("usage:")
+        print("\t--train outputfile [corpus files, separated by spaces]")
+        print("\t--lang inputfolder [corpus files, separated by spaces]")
+        print("Output file stores one training set's top ngrams while input folder stores all corpuses training results for language classification.")
+        exit(2)
+
+    corpus = sys.argv[3:]
+
+    if (sys.argv[1] == '--train'):
+        outputfile = sys.argv[2]
+        tfidf = tf_idf(corpus)
+        top_200 = top_n(tfidf, 200)
+        with open(outputfile, 'wb') as file:
+            pickle.dump(top_200, file)
+
+    if (sys.argv[1] == '--lang'):
+        inputfolder = sys.argv[2]
+        for dirpath, dirnames, filenames in os.walk(inputfolder):
+            ngrams_data = {}
+            for filename in filenames:
+                path = dirpath + "/" + filename
+                with open(path, 'rb') as file:
+                    ngrams = pickle.load(file)
+                    ngrams_data[path] = ngrams
+                    print(f"--- Top 200 ngrams:", path)
+                    for (ngram, doc), tfidf in ngrams:
+                        print(f'{ngram}, {doc}:', tfidf)
+            break  # Only toplevel dir
