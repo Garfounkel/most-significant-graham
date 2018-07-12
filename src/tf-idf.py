@@ -27,7 +27,7 @@ def corpus_stats(corpus, ngram_range=(1, 4)):
     return ngrams, words_per_doc
 
 
-def tf_idf(corpus):
+def tf_idf(corpus, training=False):
     """tf_idf(corpus) --> map(ngram: map(doc_n: tf-idf))
 
     Arguments:
@@ -44,7 +44,7 @@ def tf_idf(corpus):
         # Computing tf-idf:
         for doc, count in docs.items():
             tf = count / words_per_doc[doc][len(ngram)]
-            tfidf = tf * idf
+            tfidf = tf if (training and idf == 0) else tf * idf
             result[(ngram, doc)] = tfidf
     return result
 
@@ -83,10 +83,13 @@ if __name__ == '__main__':
 
     if (sys.argv[1] == '--train'):
         outputfile = sys.argv[2]
-        tfidf = tf_idf(corpus)
+        print("Computing most signicant ngrams for", corpus)
+        tfidf = tf_idf(corpus, training=True)
         top_200 = top_n(tfidf, 200)
+        print("Dumping training output...")
         with open(outputfile, 'wb') as file:
             pickle.dump(top_200, file)
+        print("Output saved at", outputfile)
 
     if (sys.argv[1] == '--lang'):
         inputfolder = sys.argv[2]
