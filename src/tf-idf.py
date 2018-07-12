@@ -78,9 +78,9 @@ if __name__ == '__main__':
 
     if (sys.argv[1] == '--lang'):
         inputfolder = sys.argv[2]
-        lang_scores = defaultdict(int)
         for dirpath, dirnames, filenames in os.walk(inputfolder):
             for inputfile in corpus:
+                lang_scores = defaultdict(int)
                 ngrams_input = tf_idf([inputfile])
                 for filename in filenames:
                     path = dirpath + "/" + filename
